@@ -14,16 +14,29 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt update
-          sudo apt install -y build-essential git bc gcc-aarch64-linux-gnu
+          sudo apt install -y \
+            build-essential git bc flex bison \
+            libssl-dev libelf-dev gcc-aarch64-linux-gnu
+
+      - name: Clone Android common kernel source
+        run: |
+          git clone --depth 1 --branch android12-5.10 \
+            https://android.googlesource.com/kernel/common kernel-source
+
+      - name: Prepare Android kernel tree
+        run: |
+          cd kernel-source
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- gki_defconfig
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
 
       - name: Clone driver source
         run: |
           git clone https://github.com/aircrack-ng/rtl8812au.git driver
 
-      - name: Compile kernel module
+      - name: Build driver against Android kernel tree
         run: |
           cd driver
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- KSRC=$GITHUB_WORKSPACE/kernel-source
 
       - name: Upload module
         uses: actions/upload-artifact@v4
