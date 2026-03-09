@@ -1,0 +1,32 @@
+name: Build RTL8821AU Driver
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git bc gcc-aarch64-linux-gnu
+
+      - name: Clone driver source
+        run: |
+          git clone https://github.com/aircrack-ng/rtl8812au.git driver
+
+      - name: Compile kernel module
+        run: |
+          cd driver
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+      - name: Upload module
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtl8821au-module
+          path: driver/*.ko
